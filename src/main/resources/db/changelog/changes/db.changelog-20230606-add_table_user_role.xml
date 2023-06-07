@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd">
+
+    <changeSet id="db.changelog-20230606-add_table_user_role.xml-1" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user_role"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="user_role">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints unique="true" nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints unique="false" nullable="false"/>
+            </column>
+            <column name="role_id" type="bigint">
+                <constraints unique="false" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="db.changelog-20230606-add_table_user_role.xml-2" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyTableName="user_role" foreignKeyName="fk_user_id"/>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="fk_user_id"
+                                 baseTableName="user_role"
+                                 baseColumnNames="user_id"
+                                 referencedTableName="user"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="db.changelog-20230606-add_table_user_role.xml-3" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyTableName="user_role" foreignKeyName="fk_role_id"/>
+            </not>
+        </preConditions>
+
+        <addForeignKeyConstraint constraintName="fk_role_id"
+                                 baseTableName="user_role"
+                                 baseColumnNames="role_id"
+                                 referencedTableName="role"
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="db.changelog-20230606-add_table_user_role.xml-4" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*)
+                FROM user_role WHERE user_id = 1 and role_id = 1
+            </sqlCheck>
+        </preConditions>
+
+        <comment>add user_role admin</comment>
+        <insert tableName="user_role">
+            <column name="user_id" value="1"/>
+            <column name="role_id" value="1"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="db.changelog-20230606-add_table_user_role.xml-5" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*)
+                FROM user_role WHERE user_id = 2 and role_id = 2
+            </sqlCheck>
+        </preConditions>
+
+        <comment>add user_role user</comment>
+        <insert tableName="user_role">
+            <column name="user_id" value="2"/>
+            <column name="role_id" value="2"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd">
+
+    <changeSet id="db.changelog-20230606-add_table_role.xml-1" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="role"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="role">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints unique="true" nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="db.changelog-20230606-add_table_role.xml-2" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*)
+                FROM role WHERE name = 'ADMIN_ROLE'
+            </sqlCheck>
+        </preConditions>
+
+        <comment>add role admin</comment>
+        <insert tableName="role">
+            <column name="name" value="ADMIN_ROLE"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="db.changelog-20230606-add_table_role.xml-3" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*)
+                FROM role WHERE name = 'USER_ROLE'
+            </sqlCheck>
+        </preConditions>
+
+        <comment>add role user</comment>
+        <insert tableName="role">
+            <column name="name" value="USER_ROLE"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

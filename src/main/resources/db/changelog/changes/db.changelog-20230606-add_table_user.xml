@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd">
+
+    <changeSet id="db.changelog-20230606-add_table_user.xml-1" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="user"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="user">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints unique="true" nullable="false" primaryKey="true"/>
+            </column>
+            <column name="username" type="varchar(32)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="password" type="varchar(256)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="db.changelog-20230606-add_table_user.xml-2" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*)
+                FROM public.user WHERE username = 'admin'
+            </sqlCheck>
+        </preConditions>
+
+        <comment>add user admin</comment>
+        <insert tableName="user">
+            <column name="username" value="admin"/>
+            <column name="password" value="$2a$10$v3kAuRxS90iNdcKmNLZNBeN1a3oegt/4wZHOicER4J7VUAjOC4I5."/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="db.changelog-20230606-add_table_user.xml-3" author="mokrovitskii">
+
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*)
+                FROM public.user WHERE username = 'user'
+            </sqlCheck>
+        </preConditions>
+
+        <comment>add user user</comment>
+        <insert tableName="user">
+            <column name="username" value="user"/>
+            <column name="password" value="$2a$10$26DW74oqXmQLZVBCYg/t0.cBs/YxVqIrGMKAefuM6olgtHcoRPjgS"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
