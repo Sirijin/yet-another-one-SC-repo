@@ -1,7 +1,8 @@
 package com.example.demo.config;
 
+import com.example.demo.security.CustomAuthenticationEntryPoint;
 import com.example.demo.security.JwtFilter;
-import com.example.demo.service.UserService;
+import com.example.demo.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,13 +25,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class WebSecurityConfig {
 
+    private final CustomUserDetailsService customUserDetailsService;
     private final JwtFilter jwtFilter;
-    private final UserService userService;
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(
+                        (exceptionHandling) ->
+                                exceptionHandling
+                                        .authenticationEntryPoint(authenticationEntryPoint))
                 .sessionManagement(
                         (sessionManagement) ->
                                 sessionManagement
@@ -39,7 +45,7 @@ public class WebSecurityConfig {
                         (authorizeHttpRequests) ->
                                 authorizeHttpRequests
                                         .requestMatchers("/auth/login").permitAll()
-                                        .requestMatchers("/test/admin").hasAnyAuthority("ADMIN_ROLE")
+                                        .requestMatchers("/admin/**").hasAnyAuthority("ADMIN_ROLE")
                                         .requestMatchers("/test/user").hasAnyAuthority("USER_ROLE")
                                         .anyRequest().authenticated())
                 .authenticationProvider(daoAuthenticationProvider())
@@ -56,7 +62,7 @@ public class WebSecurityConfig {
     public DaoAuthenticationProvider daoAuthenticationProvider() {
         DaoAuthenticationProvider daoAuthenticationProvider = new DaoAuthenticationProvider();
         daoAuthenticationProvider.setPasswordEncoder(passwordEncoder());
-        daoAuthenticationProvider.setUserDetailsService(userService);
+        daoAuthenticationProvider.setUserDetailsService(customUserDetailsService);
         return daoAuthenticationProvider;
     }
 
