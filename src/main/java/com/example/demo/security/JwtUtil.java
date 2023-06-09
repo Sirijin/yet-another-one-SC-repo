@@ -3,6 +3,8 @@ package com.example.demo.security;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.exception.JwtAuthenticationException;
+import com.example.demo.repository.RoleRepository;
+import com.example.demo.type.RoleSet;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -16,10 +18,8 @@ import org.springframework.stereotype.Component;
 
 import java.security.Key;
 import java.security.Principal;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -33,6 +33,8 @@ public class JwtUtil {
 
     private static final String HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
+
+    private final RoleRepository roleRepository;
 
     public String createToken(User user) {
         Claims claims = Jwts.claims().setSubject(String.valueOf(user.getId()));
@@ -78,10 +80,15 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
 
-        Set<Role> roles = new HashSet<>();
-        for (Object role : claims.get("roles", List.class)) {
-            roles.add((Role) role);
-        }
+        List<Map<String, Object>> rolesList = claims.get("roles", List.class);
+
+        Set<Role> roles = rolesList.stream()
+                .map(roleMap -> (String) roleMap.get("name")) // Извлекаем значения поля 'name'
+                .map(RoleSet::valueOf) // Преобразуем строковое значение в соответствующий элемент enum RoleSet
+                .map(roleRepository::findByName) // Ищем роль по значению enum в репозитории
+                .filter(Objects::nonNull) // Отфильтровываем найденные роли, исключая null
+                .collect(Collectors.toSet()); // Собираем результаты в Set<Role>
+
 
         return TokenInfo
                 .builder()

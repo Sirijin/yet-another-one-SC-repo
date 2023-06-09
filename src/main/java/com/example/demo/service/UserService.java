@@ -153,10 +153,10 @@ public class UserService {
     }
 
     @SneakyThrows
-    @Transactional
     public Object getUserInfo(Authentication authentication) {
         CustomPrincipal principal = (CustomPrincipal) authentication.getPrincipal();
-        return userRepository.findById(principal.getId()).orElse(null);
+        User user = userRepository.findById(principal.getId()).orElse(null);
+        return user;
     }
 
 }

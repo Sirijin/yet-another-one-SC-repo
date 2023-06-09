@@ -19,13 +19,16 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
+    private final String LOGIN_URI = "/auth/login";
+    private final String REGISTER_URI = "/auth/register";
+    private final String TEST_URI = "/test";
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request,
                                     @NotNull HttpServletResponse response,
                                     @NotNull FilterChain filterChain) throws ServletException, IOException {
 
-        if (request.getRequestURI().equals("/auth/login")) {
+        if (request.getRequestURI().equals(LOGIN_URI) | request.getRequestURI().equals(REGISTER_URI) | request.getRequestURI().equals(TEST_URI)) {
             filterChain.doFilter(request, response);
             return;
         }
