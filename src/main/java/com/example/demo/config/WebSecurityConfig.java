@@ -6,6 +6,7 @@ import com.example.demo.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -44,7 +45,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(
                         (authorizeHttpRequests) ->
                                 authorizeHttpRequests
-                                        .requestMatchers("/auth/login", "/auth/register").permitAll()
+                                        .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
                                         .requestMatchers("/admin/**", "/test/admin").hasAnyAuthority("ADMIN_ROLE")
                                         .requestMatchers("/test/user").hasAnyAuthority("USER_ROLE")
                                         .anyRequest().authenticated())

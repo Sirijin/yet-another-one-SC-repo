@@ -19,9 +19,10 @@ import java.io.IOException;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final String LOGIN_URI = "/auth/login";
-    private final String REGISTER_URI = "/auth/register";
-    private final String TEST_URI = "/test";
+
+    private final static String LOGIN_URI = "/auth/login";
+    private final static String REGISTER_URI = "/auth/register";
+    private final static String TEST_URI = "/test";
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request,

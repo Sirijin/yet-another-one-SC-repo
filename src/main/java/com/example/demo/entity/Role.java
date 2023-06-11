@@ -1,9 +1,9 @@
 package com.example.demo.entity;
 
 import com.example.demo.type.RoleSet;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -36,7 +36,7 @@ public class Role implements GrantedAuthority {
                     @JoinColumn(name = "user_id")
             }
     )
-    @ToString.Exclude
+    @JsonIgnore
     private transient Set<User> users;
 
     @Override

@@ -30,7 +30,7 @@ public class AdminController {
             @ApiResponse(responseCode = "400", description = "Bad request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content),
     })
-    @GetMapping("/list")
+    @GetMapping("/users")
     public ResponseEntity<?> getUserList() {
         try {
             return ResponseEntity.ok(userService.getUserList());

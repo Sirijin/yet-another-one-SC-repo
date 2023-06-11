@@ -1,12 +1,15 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.UserDto;
+import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.exception.UserException;
-import com.example.demo.mapper.UserMapper;
+import com.example.demo.mapper.CustomUserMapper;
+import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.CustomPrincipal;
 import com.example.demo.security.JwtUtil;
+import com.example.demo.type.RoleSet;
 import com.example.demo.web.request.AuthRequest;
 import com.example.demo.web.response.UserResponse;
 import jakarta.transaction.Transactional;
@@ -22,9 +25,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,14 +33,25 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final RoleService roleService;
-    private final UserMapper userMapper;
+    private final RoleRepository roleRepository;
+    private final CustomUserMapper userMapper;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
+    @SneakyThrows
+    @Transactional
+    public UserResponse getUserList() {
+        return new UserResponse(userRepository.findAll().stream().map(userMapper::map).collect(Collectors.toList()), userRepository.count());
+    }
+
+    @SneakyThrows
+    @Transactional
+    public User getUser(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
 
     @SneakyThrows
     @Transactional
@@ -64,8 +76,8 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        if (!dto.getRoles().isEmpty()) {
-            user.setRoles(dto.getRoles().stream().map(roleService::getRole).collect(Collectors.toSet()));
+        if (dto.getRoles() != null) {
+            user.setRoles(dto.getRoles().stream().map(roleRepository::findByName).collect(Collectors.toSet()));
         }
 
         userRepository.save(user);
@@ -76,19 +88,19 @@ public class UserService {
     @SneakyThrows
     @Transactional
     public UserDto updatePassword(Long id, String password) {
-        UserDto userDto = userMapper.map(userRepository.findById(id).orElse(null));
+        User user = userRepository.findById(id).orElse(null);
 
-        if (userDto == null) {
+        if (user == null) {
             throw new UserException("User not exist");
         }
-        if (!passwordEncoder.encode(userDto.getPassword()).equals(password)) {
-            userDto.setPassword(passwordEncoder.encode(password));
+        if (!passwordEncoder.encode(user.getPassword()).equals(password)) {
+            user.setPassword(passwordEncoder.encode(password));
         }
 
-        userRepository.save(userMapper.map(userDto));
+        userRepository.save(user);
         log.info("In updatePassword - users password with: {} updated", id);
 
-        return userDto;
+        return userMapper.map(user);
     }
 
     @SneakyThrows
@@ -105,24 +117,6 @@ public class UserService {
 
     @SneakyThrows
     @Transactional
-    public UserResponse getUserList() {
-        return new UserResponse(userRepository.findAll().stream().map(userMapper::map).collect(Collectors.toList()), userRepository.count());
-    }
-
-    @SneakyThrows
-    @Transactional
-    public User getUser(Long id) {
-        return userRepository.findById(id).orElse(null);
-    }
-
-    @SneakyThrows
-    @Transactional
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
-
-    @SneakyThrows
-    @Transactional
     public Map<Object, Object> loginUser(AuthRequest request) {
         String username = request.getUsername();
         if (!userRepository.existsByUsername(username)) {
@@ -134,7 +128,8 @@ public class UserService {
         String token = jwtUtil.createToken(user);
 
         Map<Object, Object> response = new HashMap<>();
-        response.put("user", user);
+        response.put("username", user.getUsername());
+        response.put("authorities", user.getAuthorities());
         response.put("token", token);
 
         return response;
@@ -143,10 +138,18 @@ public class UserService {
     @SneakyThrows
     @Transactional
     public User registerUser(UserDto userDto) {
-        User newUser = userMapper.map(userDto).toBuilder()
+        Set<Role> roles;
+        if (userDto.getRoles() == null) {
+            roles = new HashSet<>();
+            roles.add(roleRepository.findByName(RoleSet.USER_ROLE));
+        } else {
+            return userRepository.save(userMapper.map(userDto));
+        }
+
+        User newUser = User.builder()
                 .username(userDto.getUsername())
                 .password(passwordEncoder.encode(userDto.getPassword()))
-                .roles(userDto.getRoles().stream().map(roleService::getRole).collect(Collectors.toSet()))
+                .roles(roles)
                 .build();
 
         return userRepository.save(newUser);
@@ -155,9 +158,7 @@ public class UserService {
     @SneakyThrows
     public Object getUserInfo(Authentication authentication) {
         CustomPrincipal principal = (CustomPrincipal) authentication.getPrincipal();
-        User user = userRepository.findById(principal.getId()).orElse(null);
-        return user;
+        return userRepository.findById(principal.getId()).orElse(new User());
     }
-
 }
 

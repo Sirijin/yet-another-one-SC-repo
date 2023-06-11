@@ -80,24 +80,25 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
 
-        List<Map<String, Object>> rolesList = claims.get("roles", List.class);
-
-        Set<Role> roles = rolesList.stream()
-                .map(roleMap -> (String) roleMap.get("name")) // Извлекаем значения поля 'name'
-                .map(RoleSet::valueOf) // Преобразуем строковое значение в соответствующий элемент enum RoleSet
-                .map(roleRepository::findByName) // Ищем роль по значению enum в репозитории
-                .filter(Objects::nonNull) // Отфильтровываем найденные роли, исключая null
-                .collect(Collectors.toSet()); // Собираем результаты в Set<Role>
-
-
         return TokenInfo
                 .builder()
                 .id(Long.valueOf(claims.getSubject()))
                 .username(claims.get("username", String.class))
                 .startingDate(claims.getIssuedAt())
                 .expiresAt(claims.getExpiration())
-                .roles(roles)
+                .roles(getRolesFromClaims(claims))
                 .build();
+    }
+
+    private Set<Role> getRolesFromClaims(Claims claims) {
+        List<Map<String, Object>> rolesList = claims.get("roles", List.class);
+
+        return rolesList.stream()
+                .map(roleMap -> (String) roleMap.get("name")) // Извлекаем значения поля 'name'
+                .map(RoleSet::valueOf) // Преобразуем строковое значение в соответствующий элемент enum RoleSet
+                .map(roleRepository::findByName) // Ищем роль по значению enum в репозитории
+                .filter(Objects::nonNull) // Отфильтровываем найденные роли, исключая null
+                .collect(Collectors.toSet());
     }
 
     private Key key() {
