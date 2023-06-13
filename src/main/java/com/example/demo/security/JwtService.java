@@ -3,7 +3,7 @@ package com.example.demo.security;
 import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.exception.JwtAuthenticationException;
-import com.example.demo.repository.RoleRepository;
+import com.example.demo.service.RoleService;
 import com.example.demo.type.RoleSet;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -14,16 +14,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component
+@Service
 @RequiredArgsConstructor
-public class JwtUtil {
+public class JwtService {
 
     @Value("${jwt.secret}")
     private String secret;
@@ -34,7 +34,7 @@ public class JwtUtil {
     private static final String HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
 
     public String createToken(User user) {
         Claims claims = Jwts.claims().setSubject(String.valueOf(user.getId()));
@@ -94,10 +94,10 @@ public class JwtUtil {
         List<Map<String, Object>> rolesList = claims.get("roles", List.class);
 
         return rolesList.stream()
-                .map(roleMap -> (String) roleMap.get("name")) // Извлекаем значения поля 'name'
-                .map(RoleSet::valueOf) // Преобразуем строковое значение в соответствующий элемент enum RoleSet
-                .map(roleRepository::findByName) // Ищем роль по значению enum в репозитории
-                .filter(Objects::nonNull) // Отфильтровываем найденные роли, исключая null
+                .map(roleMap -> (String) roleMap.get("name"))
+                .map(RoleSet::valueOf)
+                .map(roleService::findByName)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 

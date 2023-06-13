@@ -16,6 +16,4 @@ public class TokenInfo {
     private Set<Role> roles;
     private Date startingDate;
     private Date expiresAt;
-
-
 }

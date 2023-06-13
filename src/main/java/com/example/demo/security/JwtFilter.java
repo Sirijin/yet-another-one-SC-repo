@@ -1,6 +1,7 @@
 package com.example.demo.security;
 
 import com.example.demo.exception.JwtAuthenticationException;
+import com.example.demo.type.AllowedUri;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,35 +19,32 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
-
-    private final static String LOGIN_URI = "/auth/login";
-    private final static String REGISTER_URI = "/auth/register";
-    private final static String TEST_URI = "/test";
+    private final JwtService jwtService;
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request,
                                     @NotNull HttpServletResponse response,
                                     @NotNull FilterChain filterChain) throws ServletException, IOException {
 
-        if (request.getRequestURI().equals(LOGIN_URI) | request.getRequestURI().equals(REGISTER_URI) | request.getRequestURI().equals(TEST_URI)) {
+        if (request.getRequestURI().equals(AllowedUri.LOGIN.getUri())
+                || request.getRequestURI().equals(AllowedUri.REGISTER.getUri())
+                || request.getRequestURI().equals(AllowedUri.SWAGGER.getUri())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = jwtUtil.getTokenFromHeader(request);
+        String token = jwtService.getTokenFromHeader(request);
 
         try {
-            if (token != null && jwtUtil.validateToken(token)) {
-                Authentication authentication = jwtUtil.getAuthentication(token);
-
+            if (jwtService.validateToken(token)) {
+                Authentication authentication = jwtService.getAuthentication(token);
                 if (authentication != null) {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         } catch (JwtAuthenticationException e) {
             SecurityContextHolder.clearContext();
-            throw new JwtAuthenticationException("Token is expired or invalid");
+            throw e;
         }
 
         filterChain.doFilter(request, response);

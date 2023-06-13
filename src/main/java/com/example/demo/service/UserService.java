@@ -1,42 +1,39 @@
 package com.example.demo.service;
 
 import com.example.demo.dto.UserDto;
-import com.example.demo.entity.Role;
 import com.example.demo.entity.User;
 import com.example.demo.exception.UserException;
 import com.example.demo.mapper.CustomUserMapper;
-import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.CustomPrincipal;
-import com.example.demo.security.JwtUtil;
-import com.example.demo.type.RoleSet;
+import com.example.demo.security.JwtService;
 import com.example.demo.web.request.AuthRequest;
+import com.example.demo.web.response.LoginResponse;
 import com.example.demo.web.response.UserResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final RoleService roleService;
     private final CustomUserMapper userMapper;
-    private final JwtUtil jwtUtil;
-    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
@@ -77,7 +74,7 @@ public class UserService {
         }
 
         if (dto.getRoles() != null) {
-            user.setRoles(dto.getRoles().stream().map(roleRepository::findByName).collect(Collectors.toSet()));
+            user.setRoles(dto.getRoles().stream().map(roleService::findByName).collect(Collectors.toSet()));
         }
 
         userRepository.save(user);
@@ -117,48 +114,31 @@ public class UserService {
 
     @SneakyThrows
     @Transactional
-    public Map<Object, Object> loginUser(AuthRequest request) {
+    public LoginResponse loginUser(AuthRequest request) {
         String username = request.getUsername();
         if (!userRepository.existsByUsername(username)) {
             throw new UserException("User does not exist");
         }
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
         User user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
-        String token = jwtUtil.createToken(user);
+        String token = jwtService.createToken(user);
 
-        Map<Object, Object> response = new HashMap<>();
-        response.put("username", user.getUsername());
-        response.put("authorities", user.getAuthorities());
-        response.put("token", token);
-
-        return response;
+        return new LoginResponse(token);
     }
 
     @SneakyThrows
     @Transactional
     public User registerUser(UserDto userDto) {
-        Set<Role> roles;
-        if (userDto.getRoles() == null) {
-            roles = new HashSet<>();
-            roles.add(roleRepository.findByName(RoleSet.USER_ROLE));
-        } else {
-            return userRepository.save(userMapper.map(userDto));
-        }
-
-        User newUser = User.builder()
-                .username(userDto.getUsername())
-                .password(passwordEncoder.encode(userDto.getPassword()))
-                .roles(roles)
-                .build();
-
-        return userRepository.save(newUser);
+        return userRepository.save(userMapper.map(userDto));
     }
 
     @SneakyThrows
-    public Object getUserInfo(Authentication authentication) {
+    public UserDto getUserInfo(Authentication authentication) {
         CustomPrincipal principal = (CustomPrincipal) authentication.getPrincipal();
-        return userRepository.findById(principal.getId()).orElse(new User());
+        return userMapper.map(Objects.requireNonNull(userRepository.findById(principal.getId()).orElse(null)));
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findByUsername(username).orElseThrow(() -> new UsernameNotFoundException("User does not exist"));
     }
 }
-

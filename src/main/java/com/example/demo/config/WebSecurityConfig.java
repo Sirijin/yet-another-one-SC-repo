@@ -1,6 +1,5 @@
 package com.example.demo.config;
 
-import com.example.demo.security.CustomAuthenticationEntryPoint;
 import com.example.demo.security.JwtFilter;
 import com.example.demo.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
@@ -28,16 +27,11 @@ public class WebSecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final JwtFilter jwtFilter;
-    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(
-                        (exceptionHandling) ->
-                                exceptionHandling
-                                        .authenticationEntryPoint(authenticationEntryPoint))
                 .sessionManagement(
                         (sessionManagement) ->
                                 sessionManagement
@@ -46,6 +40,7 @@ public class WebSecurityConfig {
                         (authorizeHttpRequests) ->
                                 authorizeHttpRequests
                                         .requestMatchers(HttpMethod.POST, "/auth/**").permitAll()
+                                        .requestMatchers("/swagger-ui/index.html").permitAll()
                                         .requestMatchers("/admin/**", "/test/admin").hasAnyAuthority("ADMIN_ROLE")
                                         .requestMatchers("/test/user").hasAnyAuthority("USER_ROLE")
                                         .anyRequest().authenticated())

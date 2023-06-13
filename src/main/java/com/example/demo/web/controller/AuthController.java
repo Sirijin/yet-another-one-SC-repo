@@ -6,8 +6,9 @@ import com.example.demo.web.request.AuthRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+
+import static com.example.demo.web.controller.errorHandler.ProcessError.processError;
 
 @RestController
 @RequestMapping("/auth")
@@ -21,7 +22,7 @@ public class AuthController {
         try {
             return ResponseEntity.ok(userService.loginUser(request));
         } catch (Exception e) {
-            throw new UsernameNotFoundException("User does not exist");
+            return processError("failed to login user", e);
         }
     }
 
@@ -30,12 +31,16 @@ public class AuthController {
         try {
             return ResponseEntity.ok(userService.registerUser(userDto));
         } catch (Exception e) {
-            throw new UsernameNotFoundException("User does not exist");
+            return processError("failed to register user", e);
         }
     }
 
     @GetMapping("/info")
     public ResponseEntity<?> getUserInfo(Authentication authentication) {
-        return ResponseEntity.ok(userService.getUserInfo(authentication));
+        try {
+            return ResponseEntity.ok(userService.getUserInfo(authentication));
+        } catch (Exception e) {
+            return processError("failed to get user info", e);
+        }
     }
 }
