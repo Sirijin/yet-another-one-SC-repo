@@ -46,8 +46,8 @@ public class UserService implements UserDetailsService {
 
     @SneakyThrows
     @Transactional
-    public User getUser(Long id) {
-        return userRepository.findById(id).orElse(null);
+    public UserDto getUser(Long id) {
+        return userMapper.map(Objects.requireNonNull(userRepository.findById(id).orElse(null)));
     }
 
     @SneakyThrows
