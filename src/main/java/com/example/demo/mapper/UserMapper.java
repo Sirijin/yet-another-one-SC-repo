@@ -6,7 +6,6 @@ import com.example.demo.entity.User;
 import com.example.demo.service.RoleService;
 import com.example.demo.type.RoleSet;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -15,9 +14,8 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class CustomUserMapper {
+public class UserMapper {
 
-    private final PasswordEncoder passwordEncoder;
     private final RoleService roleService;
 
     public UserDto map(User user) {
@@ -29,7 +27,7 @@ public class CustomUserMapper {
                 .build();
     }
 
-    public User map(UserDto userDto) {
+    public User map(UserDto userDto, String password) {
         Set<Role> roles;
         if (userDto.getRoles() == null) {
             roles = new HashSet<>();
@@ -39,7 +37,7 @@ public class CustomUserMapper {
         }
         return User.builder()
                 .username(userDto.getUsername())
-                .password(passwordEncoder.encode(userDto.getPassword()))
+                .password(password)
                 .roles(roles)
                 .build();
     }

@@ -1,6 +1,5 @@
 package com.example.demo.security;
 
-import com.example.demo.exception.JwtAuthenticationException;
 import com.example.demo.type.AllowedUri;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,24 +26,21 @@ public class JwtFilter extends OncePerRequestFilter {
                                     @NotNull FilterChain filterChain) throws ServletException, IOException {
 
         if (request.getRequestURI().equals(AllowedUri.LOGIN.getUri())
-                || request.getRequestURI().equals(AllowedUri.REGISTER.getUri())
-                || request.getRequestURI().equals(AllowedUri.SWAGGER.getUri())) {
+                || request.getRequestURI().equals(AllowedUri.REGISTER.getUri())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = jwtService.getTokenFromHeader(request);
-
         try {
+            String token = jwtService.getTokenFromHeader(request).orElse(null);
             if (jwtService.validateToken(token)) {
                 Authentication authentication = jwtService.getAuthentication(token);
                 if (authentication != null) {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
-        } catch (JwtAuthenticationException e) {
+        } catch (Exception e) {
             SecurityContextHolder.clearContext();
-            throw e;
         }
 
         filterChain.doFilter(request, response);

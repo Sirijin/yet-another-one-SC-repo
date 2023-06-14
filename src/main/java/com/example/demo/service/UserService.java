@@ -3,7 +3,7 @@ package com.example.demo.service;
 import com.example.demo.dto.UserDto;
 import com.example.demo.entity.User;
 import com.example.demo.exception.UserException;
-import com.example.demo.mapper.CustomUserMapper;
+import com.example.demo.mapper.UserMapper;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.security.CustomPrincipal;
 import com.example.demo.security.JwtService;
@@ -32,7 +32,7 @@ public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final RoleService roleService;
-    private final CustomUserMapper userMapper;
+    private final UserMapper userMapper;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
 
@@ -128,7 +128,8 @@ public class UserService implements UserDetailsService {
     @SneakyThrows
     @Transactional
     public User registerUser(UserDto userDto) {
-        return userRepository.save(userMapper.map(userDto));
+        String password = passwordEncoder.encode(userDto.getPassword());
+        return userRepository.save(userMapper.map(userDto, password));
     }
 
     @SneakyThrows

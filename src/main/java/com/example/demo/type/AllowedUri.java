@@ -9,7 +9,8 @@ public enum AllowedUri {
 
     LOGIN("/auth/login"),
     REGISTER("/auth/register"),
-    SWAGGER("/swagger-ui/index.html");
+    SWAGGER_UI("/swagger-ui/**"),
+    API_DOCS("/v3/api-docs/**");
 
     private final String uri;
 }

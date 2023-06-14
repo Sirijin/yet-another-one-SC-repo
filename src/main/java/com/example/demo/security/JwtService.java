@@ -68,8 +68,8 @@ public class JwtService {
         return new UsernamePasswordAuthenticationToken(principal, "", tokenInfo.getRoles());
     }
 
-    public String getTokenFromHeader(HttpServletRequest request) {
-        return request.getHeader(HEADER).substring(BEARER_PREFIX.length());
+    public Optional<String> getTokenFromHeader(HttpServletRequest request) {
+        return request.getHeader(HEADER).substring(BEARER_PREFIX.length()).describeConstable();
     }
 
     private TokenInfo getTokenInfo(String token) {
